@@ -2,101 +2,101 @@
   "cf249f76": {
     "file": "cue_cf249f76.wav",
     "text": "Battle of Okpo (May 1592) \u2014 24 Joseon Panokseon approach 50 anchored transports in Okpo Bay. Ride the flood current (~ Wave) into the harbor. 1/4: Sweep a WAVE (~) to ride the northbound flood current into Okpo Bay.",
-    "rendered": false
+    "rendered": true
   },
   "285e35c3": {
     "file": "cue_285e35c3.wav",
     "text": "Battle of Hansando \u2014 Crane Wing (Aug 1592) \u2014 56 Joseon warships (3 Geobukseon) face 73 warships off Hansando. Feign retreat (~ Wave) into open water. 1/4: Sweep a WAVE (~) to lure the enemy vanguard out of Gyeonnaeryang Channel.",
-    "rendered": false
+    "rendered": true
   },
   "3c54a498": {
     "file": "cue_3c54a498.wav",
     "text": "Battle of Myeongnyang \u2014 13 vs 133 (Oct 1597) \u2014 13 Joseon Panokseon face 133 warships in the narrow Uldolmok Gorge. Drop iron anchors (/ Slash) in the channel. 1/4: Draw a SLASH (/) to drop heavy anchors across the narrow Uldolmok choke point.",
-    "rendered": false
+    "rendered": true
   },
   "eb76f2a6": {
     "file": "cue_eb76f2a6.wav",
     "text": "Battle of Noryang \u2014 Dawn Drumbeat (Dec 1598) \u2014 63 Joseon warships seal Noryang Strait at midnight against 500 retreating vessels. 1/4: Draw a CIRCLE (O) to form a silent pre-dawn blockade across Noryang Strait.",
-    "rendered": false
+    "rendered": true
   },
   "d3f053d7": {
     "file": "cue_d3f053d7.wav",
     "text": "All 24 Panokseon glide silently into the harbor mouth. Next: 2/4: Draw a SLASH (/) to form a line abreast blocking the seaward escape.",
-    "rendered": false
+    "rendered": true
   },
   "2ccd3d38": {
     "file": "cue_2ccd3d38.wav",
     "text": "The Joseon line seals the bay; enemy transports are trapped against the shore. Next: 3/4: Draw a CIRCLE (O) to curve both wings into the cove around the anchored fleet.",
-    "rendered": false
+    "rendered": true
   },
   "504c70c6": {
     "file": "cue_504c70c6.wav",
     "text": "Both wings close in around the cove. Next: 4/4: Draw a CROSS (+) to loose flaming fire arrows (bijeok) into the anchored sails.",
-    "rendered": false
+    "rendered": true
   },
   "d34c40b8": {
     "file": "cue_d34c40b8.wav",
     "text": "Victory at Okpo! 26 transports burn in the harbor with zero Joseon ships lost. (Battle of Okpo (May 1592) Complete \u2014 4/4 Maneuvers).",
-    "rendered": false
+    "rendered": true
   },
   "8e171e0a": {
     "file": "cue_8e171e0a.wav",
     "text": "The pursuit fleet takes the bait and enters the wide waters off Hansando. Next: 2/4: Draw a CIRCLE (O) to wheel all 56 ships into the Crane Wing (Hakikjin) crescent.",
-    "rendered": false
+    "rendered": true
   },
   "ee3fa694": {
     "file": "cue_ee3fa694.wav",
     "text": "Left and right wings sweep outward in a giant U-encirclement. Next: 3/4: Draw a SLASH (/) to drive the 3 iron-roofed Turtle Ships into the enemy center.",
-    "rendered": false
+    "rendered": true
   },
   "7b7b19b2": {
     "file": "cue_7b7b19b2.wav",
     "text": "The dragon-prow Turtle Ships shatter the central command formation. Next: 4/4: Draw a CROSS (+) to close the Crane Wing pincers and fire converging broadsides.",
-    "rendered": false
+    "rendered": true
   },
   "d9b92c20": {
     "file": "cue_d9b92c20.wav",
     "text": "Decisive victory at Hansando! 47 of 73 enemy ships destroyed; sea lanes secured. (Battle of Hansando \u2014 Crane Wing (Aug 1592) Complete \u2014 4/4 Maneuvers).",
-    "rendered": false
+    "rendered": true
   },
   "5b4a1d54": {
     "file": "cue_5b4a1d54.wav",
     "text": "Admiral Yi's flagship holds the narrow gorge while 133 ships bottleneck behind it. Next: 2/4: Draw a CIRCLE (O) to rally all 12 remaining warships beside the flagship.",
-    "rendered": false
+    "rendered": true
   },
   "8c59be75": {
     "file": "cue_8c59be75.wav",
     "text": "Inspired by the flagship's stand, all 13 vessels form an unbreakable defensive arc. Next: 3/4: Sweep a WAVE (~) as the violent Uldolmok current reverses southward against the enemy.",
-    "rendered": false
+    "rendered": true
   },
   "5d7875d8": {
     "file": "cue_5d7875d8.wav",
     "text": "The roaring current reverses! Tangled enemy ships collide in the narrow gorge. Next: 4/4: Draw a CROSS (+) to ride the surging current down on the retreating vanguard.",
-    "rendered": false
+    "rendered": true
   },
   "76fc82a8": {
     "file": "cue_76fc82a8.wav",
     "text": "Miracle at Myeongnyang! 31 enemy warships sunk; all 13 Joseon ships survive. (Battle of Myeongnyang \u2014 13 vs 133 (Oct 1597) Complete \u2014 4/4 Maneuvers).",
-    "rendered": false
+    "rendered": true
   },
   "504b7477": {
     "file": "cue_504b7477.wav",
     "text": "63 Joseon ships seal the strait under midnight mist. Next: 2/4: Sweep a WAVE (~) to advance silently through the fog.",
-    "rendered": false
+    "rendered": true
   },
   "875ce318": {
     "file": "cue_875ce318.wav",
     "text": "Allied ships emerge from the mist at close quarters. Next: 3/4: Draw a SLASH (/) to cleave the retreating column with the 4 Turtle Ships.",
-    "rendered": false
+    "rendered": true
   },
   "fe6c5d0a": {
     "file": "cue_fe6c5d0a.wav",
     "text": "The retreating formation is split in two across the strait. Next: 4/4: Draw a CROSS (+) to beat the war drum at sunrise until the final ship retreats.",
-    "rendered": false
+    "rendered": true
   },
   "a6aa37f9": {
     "file": "cue_a6aa37f9.wav",
     "text": "Dawn breaks over Noryang Strait; Admiral Yi's drum beats steadily until peace is won. (Battle of Noryang \u2014 Dawn Drumbeat (Dec 1598) Complete \u2014 4/4 Maneuvers).",
-    "rendered": false
+    "rendered": true
   }
 }
