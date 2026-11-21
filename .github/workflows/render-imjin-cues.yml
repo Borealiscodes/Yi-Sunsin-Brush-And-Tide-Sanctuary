@@ -6,6 +6,7 @@ on:
     paths:
       - "src/imjin-kernel.js"
       - "scripts/render_imjin_cues.py"
+      - ".github/workflows/render-imjin-cues.yml"
 
 permissions:
   contents: write
@@ -22,14 +23,11 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install piper-tts & download en_GB-alan-medium
+      - name: Install piper-tts & download en_GB-alan-medium via built-in downloader
         run: |
           pip install --no-cache-dir piper-tts
           mkdir -p ~/.local/share/piper
-          curl -L -s -o ~/.local/share/piper/en_GB-alan-medium.onnx \
-            https://huggingface.co
-          curl -L -s -o ~/.local/share/piper/en_GB-alan-medium.onnx.json \
-            https://huggingface.co.json
+          python3 -m piper.download_voices --data-dir ~/.local/share/piper en_GB-alan-medium
 
       - name: Render 20 FNV-1a hashed WAV cues (1.28x cadence)
         run: |
