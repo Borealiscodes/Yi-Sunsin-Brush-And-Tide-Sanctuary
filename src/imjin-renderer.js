@@ -1,7 +1,6 @@
 /**
- * src/imjin-renderer.js — Polar Radial Sea Astrolabe & Autonomous Physics-Node Fleet Simulation
- * Renders concentric radial azimuth rings, hydrodynamic tidal streamlines, Bezier islands,
- * and up to 146+ individual steering ship nodes (1:1 accurate ship count at Myeongnyang 13 vs 133).
+ * src/imjin-renderer.js — Coherent, Critically-Damped Naval Fleet Simulation & Polar Sea Chart
+ * Enforces navigable channel bounds, disciplined multi-rank naval columns, and jitter-free headings.
  */
 
 import { NAVAL_BATTLES } from "./imjin-kernel.js";
@@ -9,44 +8,44 @@ import { NAVAL_BATTLES } from "./imjin-kernel.js";
 let activeFleet = null;
 let cachedBattleIdx = -1;
 
-// Hydrodynamic vector field (swirling strait eddies + tidal current)
-function sampleTidalFlow(x, y, w, h, bIdx, stage, tick) {
-  const cx = w * 0.52;
-  const cy = h * 0.5;
-  const dx = x - cx;
-  const dy = y - cy;
-  const dist = Math.hypot(dx, dy) + 1;
-
-  if (bIdx === 2) {
-    // Uldolmok Strait: violent reversing vortex torrent!
-    const dir = stage >= 2 ? 1 : -1;
-    const swirl = (dir * 1.4) / (1 + dist * 0.008);
-    return {
-      vx: (-dy / dist) * swirl + dir * 0.55,
-      vy: (dx / dist) * swirl * 0.65
-    };
+// Exact navigable water channel [topY, botY] at horizontal coordinate x for each map
+function getChannelBounds(x, w, h, bIdx) {
+  if (bIdx === 0) {
+    // Okpo Bay: open western approach narrowing into eastern anchorage cove
+    const t = Math.max(0, Math.min(1, x / w));
+    const top = 46 + Math.sin(t * Math.PI) * 34;
+    const bot = h - 46 - Math.sin(t * Math.PI) * 34;
+    return { top, bot };
   }
-
-  const wave = Math.sin(x * 0.015 + tick * 0.02) * 0.35;
-  const cross = Math.cos(y * 0.018 - tick * 0.015) * 0.35;
-  return { vx: 0.25 + cross, vy: wave };
+  if (bIdx === 2) {
+    // Uldolmok Strait (Myeongnyang): sharp bottleneck choke point at x = 0.44 * w
+    const distFromChoke = Math.abs(x - w * 0.44) / (w * 0.5);
+    const chokePinch = Math.max(0, 1 - distFromChoke * 1.6);
+    const top = 48 + chokePinch * 82;
+    const bot = h - 48 - chokePinch * 82;
+    return { top, bot };
+  }
+  // Open archipelago straits (Hansando & Noryang)
+  return { top: 44, bot: h - 44 };
 }
 
 function initFleetNodes(bIdx, w, h) {
   const battle = NAVAL_BATTLES.at(bIdx);
-  // Render 1:1 exact counts for Okpo (24 vs 50), Hansando (56 vs 73), Myeongnyang (13 vs 133),
-  // and 63 vs 160 vanguard nodes for Noryang (representing the 500-ship armada smoothly at 60fps)
   const jCount = battle.joseonTotal;
-  const eCount = Math.min(160, battle.enemyTotal);
+  const eCount = Math.min(140, battle.enemyTotal);
 
   const joseon = Array.of();
+  const jCols = Math.max(2, Math.ceil(jCount / 8));
   for (let i = 0; i < jCount; i += 1) {
-    const row = i % 7;
-    const col = Math.floor(i / 7);
+    const col = Math.floor(i / 8);
+    const row = i % 8;
+    const x = w * 0.14 + col * 18;
+    const bounds = getChannelBounds(x, w, h, bIdx);
+    const y = bounds.top + 14 + ((row + 0.5) / 8) * (bounds.bot - bounds.top - 28);
     joseon.push({
       id: i,
-      x: w * 0.16 + col * 14,
-      y: h * (0.24 + (row / 6) * 0.52),
+      x,
+      y,
       vx: 0,
       vy: 0,
       angle: 0,
@@ -56,23 +55,33 @@ function initFleetNodes(bIdx, w, h) {
   }
 
   const enemy = Array.of();
+  const eRows = bIdx === 2 ? 6 : 8;
   for (let i = 0; i < eCount; i += 1) {
-    const ring = i % 9;
-    const rank = Math.floor(i / 9);
+    const col = Math.floor(i / eRows);
+    const row = i % eRows;
+    const x = w * 0.62 + col * 13;
+    const bounds = getChannelBounds(x, w, h, bIdx);
+    const y = bounds.top + 12 + ((row + 0.5) / eRows) * (bounds.bot - bounds.top - 24);
     enemy.push({
       id: i,
-      x: w * 0.64 + rank * 11,
-      y: h * (0.16 + (ring / 8) * 0.68) + ((rank % 2) * 6 - 3),
+      x,
+      y,
       vx: 0,
       vy: 0,
       angle: Math.PI,
-      sunk: false,
-      smokeAlpha: 0
+      sunk: false
     });
   }
 
   activeFleet = { joseon, enemy };
   cachedBattleIdx = bIdx;
+}
+
+function normalizeAngleDiff(target, current) {
+  let diff = target - current;
+  while (diff > Math.PI) diff -= Math.PI * 2;
+  while (diff < -Math.PI) diff += Math.PI * 2;
+  return diff;
 }
 
 function stepFleetPhysics(w, h, state, tick) {
@@ -83,115 +92,96 @@ function stepFleetPhysics(w, h, state, tick) {
   const bIdx = state.battleIndex;
   const battle = NAVAL_BATTLES.at(bIdx);
   const { joseon, enemy } = activeFleet;
-  const cx = w * 0.52;
   const cy = h * 0.5;
 
-  // Update sunk status proportionally to battle state
   const sunkRatio = (battle.enemyTotal - state.enemyActive) / battle.enemyTotal;
   const targetSunk = Math.round(enemy.length * sunkRatio);
   for (let i = 0; i < enemy.length; i += 1) {
-    if (i < targetSunk) {
-      enemy.at(i).sunk = true;
-      enemy.at(i).smokeAlpha = Math.min(1, enemy.at(i).smokeAlpha + 0.02);
-    } else {
-      enemy.at(i).sunk = false;
-      enemy.at(i).smokeAlpha = 0;
-    }
+    enemy.at(i).sunk = i < targetSunk;
   }
 
-  // 1. Steer Joseon nodes into fluid polar/tactical formations
+  // 1. Coherent Joseon Naval Formations (Critically damped, zero jitter)
   for (let i = 0; i < joseon.length; i += 1) {
     const s = joseon.at(i);
     const norm = joseon.length > 1 ? (i / (joseon.length - 1)) - 0.5 : 0; // -0.5..+0.5
-    let tx = w * 0.26;
-    let ty = cy + norm * (h * 0.62);
+    let tx = w * 0.24;
+    let ty = cy + norm * (h * 0.54);
+    let desiredHeading = 0;
 
     if (state.formation === "DECOY_RETREAT") {
-      tx = w * 0.18 + Math.abs(norm) * 40;
-      ty = cy + norm * (h * 0.45);
+      tx = w * 0.16 + Math.abs(norm) * 28;
+      ty = cy + norm * (h * 0.42);
+      desiredHeading = Math.PI;
     } else if (state.formation === "ANCHORED_LINE") {
-      // Narrow choke line at Uldolmok gorge
-      tx = w * 0.36 + Math.cos(norm * Math.PI) * 14;
-      ty = cy + norm * (h * 0.34);
+      // Anchored across the narrow Uldolmok choke point (x = 0.39 * w)
+      tx = w * 0.39 - Math.abs(norm) * 12;
+      ty = cy + norm * 88;
+      desiredHeading = 0;
     } else if (state.formation === "LINE_ABREAST" || state.formation === "TIDE_SHIFT") {
-      tx = w * 0.38 + Math.sin(norm * Math.PI * 2) * 16;
-      ty = cy + norm * (h * 0.68);
+      tx = w * 0.36;
+      ty = cy + norm * (h * 0.62);
+      desiredHeading = 0;
     } else if (state.formation === "CRANE_WING" || state.formation === "VOLLEY") {
-      // Sweeping Polar Crane Wing (Hakikjin) logarithmic crescent!
-      const arcAngle = norm * Math.PI * 0.88; // -80 deg to +80 deg
-      const radius = 155;
-      tx = cx + 45 - Math.cos(arcAngle) * radius;
-      ty = cy + Math.sin(arcAngle) * (radius * 1.15);
+      // Clean U-shaped Crane Wing (Hakikjin) crescent facing enemy center
+      const wingAdvance = Math.pow(Math.abs(norm) * 2, 1.6) * 115;
+      tx = w * 0.34 + wingAdvance;
+      ty = cy + norm * (h * 0.68);
+      desiredHeading = Math.atan2(cy - ty, (w * 0.66) - tx);
     } else if (state.formation === "TURTLE_SPEAR") {
-      if (s.isTurtle || i < 4) {
-        tx = cx + 25 - i * 14;
-        ty = cy + (i - 1.5) * 16;
+      if (s.isTurtle || i < 3) {
+        tx = w * 0.50 - i * 16;
+        ty = cy + (i - 1) * 18;
+        desiredHeading = 0;
       } else {
-        const arcAngle = norm * Math.PI * 0.75;
-        tx = cx + 30 - Math.cos(arcAngle) * 150;
-        ty = cy + Math.sin(arcAngle) * 165;
+        const wingAdvance = Math.pow(Math.abs(norm) * 2, 1.5) * 95;
+        tx = w * 0.33 + wingAdvance;
+        ty = cy + norm * (h * 0.64);
+        desiredHeading = Math.atan2(cy - ty, (w * 0.66) - tx);
       }
     }
 
-    // Hydrodynamic drift + spring steering toward tactical slot
-    const flow = sampleTidalFlow(s.x, s.y, w, h, bIdx, state.completedTurns, tick);
-    const ax = (tx - s.x) * 0.035 + flow.vx * 0.25;
-    const ay = (ty - s.y) * 0.035 + flow.vy * 0.25;
+    // Clamp target strictly inside navigable water channel
+    const bounds = getChannelBounds(tx, w, h, bIdx);
+    ty = Math.max(bounds.top + 12, Math.min(bounds.bot - 12, ty));
 
-    s.vx = (s.vx + ax) * 0.82;
-    s.vy = (s.vy + ay) * 0.82;
+    // Critically damped spring (zero overshoot/jitter)
+    s.vx = s.vx * 0.68 + (tx - s.x) * 0.065;
+    s.vy = s.vy * 0.68 + (ty - s.y) * 0.065;
     s.x += s.vx;
     s.y += s.vy;
 
-    // Face toward enemy center during Crane Wing / Volley, or along velocity vector
-    if (state.formation === "CRANE_WING" || state.formation === "VOLLEY" || state.formation === "ANCHORED_LINE") {
-      const targetAngle = Math.atan2(cy - s.y, (cx + 70) - s.x);
-      s.angle += (targetAngle - s.angle) * 0.12;
-    } else if (Math.hypot(s.vx, s.vy) > 0.15) {
-      const moveAngle = Math.atan2(s.vy, s.vx);
-      s.angle += (moveAngle - s.angle) * 0.12;
-    }
+    const speed = Math.hypot(s.vx, s.vy);
+    const targetAngle = speed > 0.6 ? Math.atan2(s.vy, s.vx) : desiredHeading;
+    s.angle += normalizeAngleDiff(targetAngle, s.angle) * 0.1;
   }
 
-  // 2. Steer Enemy nodes (bottlenecked in straits, compressed inside Crane Wing, or swirling in Myeongnyang tide)
+  // 2. Coherent Enemy Naval Columns (Marching into straits & compressing cleanly)
+  const eRows = bIdx === 2 ? 6 : 8;
   for (let i = 0; i < enemy.length; i += 1) {
     const e = enemy.at(i);
-    const flow = sampleTidalFlow(e.x, e.y, w, h, bIdx, state.completedTurns, tick);
+    if (e.sunk) continue;
 
-    if (e.sunk) {
-      e.x += flow.vx * 0.35;
-      e.y += flow.vy * 0.35;
-      e.angle += 0.008;
-      continue;
-    }
+    const col = Math.floor(i / eRows);
+    const row = i % eRows;
+    const rowNorm = ((row + 0.5) / eRows) - 0.5; // -0.5..+0.5
 
-    const ring = i % 9;
-    const rank = Math.floor(i / 9);
-    let tx = cx + 85 + rank * 12;
-    let ty = cy + ((ring / 8) - 0.5) * (bIdx === 2 ? h * 0.36 : h * 0.64);
+    let leadX = w * 0.64;
+    if (state.completedTurns === 1) leadX = w * 0.56; // Advancing into trap / choke
+    else if (state.completedTurns >= 2) leadX = w * 0.60; // Compressed by Crane Wing / tide
 
-    if (state.formation === "CRANE_WING" || state.formation === "VOLLEY") {
-      // Drawn into the Crane Wing pocket!
-      const spiralA = (i * 0.45) + tick * 0.01;
-      const spiralR = 25 + (i % 7) * 11;
-      tx = cx + 55 + Math.cos(spiralA) * spiralR;
-      ty = cy + Math.sin(spiralA) * spiralR;
-    } else if (state.formation === "TIDE_SHIFT" && bIdx === 2) {
-      // Swept into chaotic Uldolmok whirlpool!
-      const vortexA = (i * 0.38) - tick * 0.03;
-      const vortexR = 30 + (i % 8) * 12;
-      tx = cx + 40 + Math.cos(vortexA) * vortexR;
-      ty = cy + Math.sin(vortexA) * vortexR;
-    }
+    const tx = Math.min(w - 24, leadX + col * 14);
+    const bounds = getChannelBounds(tx, w, h, bIdx);
+    const span = Math.max(24, bounds.bot - bounds.top - 24);
+    const ty = cy + rowNorm * span;
 
-    e.vx = (e.vx + (tx - e.x) * 0.02 + flow.vx * 0.4) * 0.84;
-    e.vy = (e.vy + (ty - e.y) * 0.02 + flow.vy * 0.4) * 0.84;
+    e.vx = e.vx * 0.68 + (tx - e.x) * 0.055;
+    e.vy = e.vy * 0.68 + (ty - e.y) * 0.055;
     e.x += e.vx;
     e.y += e.vy;
 
-    if (Math.hypot(e.vx, e.vy) > 0.12) {
-      e.angle = Math.atan2(e.vy, e.vx);
-    }
+    const speed = Math.hypot(e.vx, e.vy);
+    const targetAngle = speed > 0.6 ? Math.atan2(e.vy, e.vx) : Math.PI;
+    e.angle += normalizeAngleDiff(targetAngle, e.angle) * 0.1;
   }
 }
 
@@ -200,20 +190,19 @@ function drawVesselNode(ctx, s, isJoseon, tick) {
   ctx.translate(s.x, s.y);
 
   if (!isJoseon && s.sunk) {
-    // Sumi-e ink smoke bloom & sinking hull cross
-    const r = 6 + Math.sin(tick * 0.06 + s.id) * 1.5;
-    ctx.fillStyle = "rgba(28, 25, 23, 0.32)";
+    const r = 5.5 + Math.sin(tick * 0.05 + s.id) * 1;
+    ctx.fillStyle = "rgba(28, 25, 23, 0.28)";
     ctx.beginPath();
-    ctx.arc(0, 0, r * 1.5, 0, Math.PI * 2);
+    ctx.arc(0, 0, r * 1.4, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.strokeStyle = "rgba(220, 38, 38, 0.85)";
     ctx.lineWidth = 1.4;
     ctx.beginPath();
-    ctx.moveTo(-4, -4);
-    ctx.lineTo(4, 4);
-    ctx.moveTo(4, -4);
-    ctx.lineTo(-4, 4);
+    ctx.moveTo(-3.5, -3.5);
+    ctx.lineTo(3.5, 3.5);
+    ctx.moveTo(3.5, -3.5);
+    ctx.lineTo(-3.5, 3.5);
     ctx.stroke();
     ctx.restore();
     return;
@@ -221,17 +210,16 @@ function drawVesselNode(ctx, s, isJoseon, tick) {
 
   ctx.rotate(s.angle);
 
-  // Subtle fluid wake ribbon
-  ctx.strokeStyle = isJoseon ? "rgba(245, 158, 11, 0.28)" : "rgba(220, 38, 38, 0.2)";
+  // Subtle wake behind stern
+  ctx.strokeStyle = isJoseon ? "rgba(217, 119, 6, 0.3)" : "rgba(185, 28, 28, 0.22)";
   ctx.lineWidth = 1.1;
   ctx.beginPath();
-  ctx.moveTo(-13, -3);
-  ctx.lineTo(-7, 0);
-  ctx.lineTo(-13, 3);
+  ctx.moveTo(-12, -2.5);
+  ctx.lineTo(-6, 0);
+  ctx.lineTo(-12, 2.5);
   ctx.stroke();
 
-  // Compact high-detail top-down hull (scales cleanly for 146+ simultaneous nodes)
-  const scale = s.isFlagship ? 1.35 : s.isTurtle ? 1.2 : 0.92;
+  const scale = s.isFlagship ? 1.3 : s.isTurtle ? 1.15 : 0.9;
   ctx.scale(scale, scale);
 
   ctx.fillStyle = isJoseon ? (s.isTurtle ? "#365314" : "#92400e") : "#7f1d1d";
@@ -239,11 +227,11 @@ function drawVesselNode(ctx, s, isJoseon, tick) {
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(10, 0);
-  ctx.lineTo(3, -4);
-  ctx.lineTo(-8, -3.5);
+  ctx.lineTo(3, -3.8);
+  ctx.lineTo(-8, -3.2);
   ctx.lineTo(-10, 0);
-  ctx.lineTo(-8, 3.5);
-  ctx.lineTo(3, 4);
+  ctx.lineTo(-8, 3.2);
+  ctx.lineTo(3, 3.8);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
@@ -251,17 +239,17 @@ function drawVesselNode(ctx, s, isJoseon, tick) {
   if (s.isTurtle) {
     ctx.fillStyle = "#65a30d";
     ctx.beginPath();
-    ctx.ellipse(0, 0, 6, 2.8, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, 5.5, 2.6, 0, 0, Math.PI * 2);
     ctx.fill();
   } else {
     ctx.fillStyle = isJoseon ? "#fbbf24" : "#fca5a5";
-    ctx.fillRect(-1, -4.8, 1.6, 9.6);
+    ctx.fillRect(-1, -4.5, 1.5, 9);
   }
 
   if (s.isFlagship) {
     ctx.fillStyle = "#fef08a";
     ctx.beginPath();
-    ctx.arc(9, 0, 2.2, 0, Math.PI * 2);
+    ctx.arc(8.5, 0, 2, 0, Math.PI * 2);
     ctx.fill();
   }
 
@@ -273,7 +261,7 @@ export function renderTopDownNavalChart(ctx, w, h, state, tick, userStroke) {
 
   const bIdx = state.battleIndex;
   const battle = NAVAL_BATTLES.at(bIdx);
-  const cx = w * 0.52;
+  const cx = w * 0.5;
   const cy = h * 0.5;
 
   // 1. Aged Hanji & Sumi-e Sea Chart Paper
@@ -284,66 +272,70 @@ export function renderTopDownNavalChart(ctx, w, h, state, tick, userStroke) {
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, w, h);
 
-  // 2. Polar Cosmology Astrolabe Rings & 16 Azimuth Spokes
-  ctx.strokeStyle = "rgba(41, 37, 36, 0.16)";
+  // 2. Concentric Polar Navigation Rings & Azimuth Spokes
+  ctx.strokeStyle = "rgba(41, 37, 36, 0.14)";
   ctx.lineWidth = 1;
-  const radii = Array.of(55, 110, 165, 220, 275);
-  for (const r of radii) {
+  for (const r of Array.of(65, 130, 195, 260)) {
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.stroke();
   }
-
   for (let a = 0; a < 16; a += 1) {
     const theta = (a / 16) * Math.PI * 2;
     ctx.beginPath();
-    ctx.moveTo(cx + Math.cos(theta) * 55, cy + Math.sin(theta) * 55);
-    ctx.lineTo(cx + Math.cos(theta) * 285, cy + Math.sin(theta) * 285);
+    ctx.moveTo(cx + Math.cos(theta) * 65, cy + Math.sin(theta) * 65);
+    ctx.lineTo(cx + Math.cos(theta) * 280, cy + Math.sin(theta) * 280);
     ctx.stroke();
   }
 
-  // 3. Hydrodynamic Tidal Streamlines (curved flow ribbons across the sea)
-  ctx.strokeStyle = bIdx === 2 ? "rgba(14, 116, 144, 0.34)" : "rgba(29, 78, 216, 0.18)";
-  ctx.lineWidth = 1.4;
-  for (let row = 42; row < h - 30; row += 36) {
+  // 3. Smooth Tidal Streamlines Matching Channel Geometry
+  ctx.strokeStyle = bIdx === 2 ? "rgba(14, 116, 144, 0.32)" : "rgba(29, 78, 216, 0.16)";
+  ctx.lineWidth = 1.3;
+  const flowDir = bIdx === 2 && state.completedTurns < 2 ? -1 : 1;
+  for (const frac of Array.of(0.28, 0.42, 0.58, 0.72)) {
     ctx.beginPath();
-    for (let x = 16; x < w - 16; x += 18) {
-      const flow = sampleTidalFlow(x, row, w, h, bIdx, state.completedTurns, tick);
+    for (let x = 16; x <= w - 16; x += 16) {
+      const bounds = getChannelBounds(x, w, h, bIdx);
+      const baseY = bounds.top + frac * (bounds.bot - bounds.top);
+      const py = baseY + Math.sin(x * 0.025 - flowDir * tick * 0.03) * 4;
+      if (x === 16) ctx.moveTo(x, py);
+      else ctx.lineTo(x, py);
+    }
+    ctx.stroke();
+  }
 
-const py = row + Math.sin(x * 0.025 + tick * 0.03) * 7 + flow.vy * 10;
-if (x === 16) ctx.moveTo(x, py);
-else ctx.lineTo(x, py);
-}
-ctx.stroke();
-}
-// 4. Organic Sumi-e Archipelago Coastlines & Bathymetric Contours
-ctx.fillStyle = "rgba(41, 37, 36, 0.86)";
-ctx.strokeStyle = "rgba(41, 37, 36, 0.35)";
-ctx.lineWidth = 4;
-if (bIdx === 0 || bIdx === 2) {
-// Narrow strait headlands (Okpo Bay / Uldolmok Choke Gorge)
+  // 4. Exact Coastlines Matching getChannelBounds(x)
+  ctx.fillStyle = "rgba(41, 37, 36, 0.88)";
+  ctx.strokeStyle = "rgba(41, 37, 36, 0.35)";
+  ctx.lineWidth = 3;
+
+  if (bIdx === 0 || bIdx === 2) {
+    // Upper headland
+
 ctx.beginPath();
 ctx.moveTo(0, 0);
+for (let x = 0; x <= w; x += 16) {
+ctx.lineTo(x, getChannelBounds(x, w, h, bIdx).top);
+}
 ctx.lineTo(w, 0);
-ctx.lineTo(w, 54);
-ctx.bezierCurveTo(w * 0.65, 65, w * 0.42, 138, 0, 52);
 ctx.closePath();
 ctx.fill();
 ctx.stroke();
+// Lower headland
 ctx.beginPath();
 ctx.moveTo(0, h);
+for (let x = 0; x <= w; x += 16) {
+ctx.lineTo(x, getChannelBounds(x, w, h, bIdx).bot);
+}
 ctx.lineTo(w, h);
-ctx.lineTo(w, h - 54);
-ctx.bezierCurveTo(w * 0.65, h - 65, w * 0.42, h - 138, 0, h - 52);
 ctx.closePath();
 ctx.fill();
 ctx.stroke();
 } else {
-// Hansando / Noryang archipelago islands with outer bathymetric rings
+// Peripheral archipelago islands outside main maneuver lanes
 const islands = Array.of(
-{ x: 118, y: 78, rx: 46, ry: 22, rot: -0.25 },
-{ x: w - 110, y: h - 76, rx: 54, ry: 26, rot: 0.2 },
-{ x: w * 0.54, y: 42, rx: 34, ry: 14, rot: 0.1 }
+{ x: 96, y: 34, rx: 58, ry: 18, rot: -0.1 },
+{ x: w - 96, y: h - 34, rx: 64, ry: 20, rot: 0.1 }
 );
 for (const isl of islands) {
 ctx.beginPath();
@@ -352,7 +344,7 @@ ctx.fill();
 ctx.stroke();
 }
 }
-// 5. Render All Autonomous Ship Nodes
+// 5. Render All Coherent Ship Nodes
 const { joseon, enemy } = activeFleet;
 for (let i = 0; i < enemy.length; i += 1) {
 drawVesselNode(ctx, enemy.at(i), false, tick);
@@ -360,17 +352,17 @@ drawVesselNode(ctx, enemy.at(i), false, tick);
 for (let i = 0; i < joseon.length; i += 1) {
 drawVesselNode(ctx, joseon.at(i), true, tick);
 }
-// 6. Curved Ballistic Cannon Broadside Arcs during Volley / Victory
+// 6. Cannon Broadside Arcs on Volley / Victory
 if (state.formation === "VOLLEY" || state.isVictory) {
-ctx.strokeStyle = "rgba(217, 119, 6, 0.55)";
-ctx.lineWidth = 1.4;
+ctx.strokeStyle = "rgba(217, 119, 6, 0.5)";
+ctx.lineWidth = 1.3;
 ctx.setLineDash(Array.of(4, 4));
-for (let i = 0; i < joseon.length; i += Math.max(1, Math.floor(joseon.length / 10))) {
+for (let i = 0; i < joseon.length; i += Math.max(1, Math.floor(joseon.length / 9))) {
 const jShip = joseon.at(i);
-const eShip = enemy.at((i * 3) % enemy.length);
+const eShip = enemy.at((i * 2) % enemy.length);
 if (!eShip) continue;
 const midX = (jShip.x + eShip.x) * 0.5;
-const midY = (jShip.y + eShip.y) * 0.5 - 18;
+const midY = (jShip.y + eShip.y) * 0.5 - 14;
 ctx.beginPath();
 ctx.moveTo(jShip.x, jShip.y);
 ctx.quadraticCurveTo(midX, midY, eShip.x, eShip.y);
@@ -378,16 +370,16 @@ ctx.stroke();
 }
 ctx.setLineDash(Array.of());
 }
-// 7. Radial Tactical HUD Pill (Top-Left)
+// 7. Tactical HUD Pill
 ctx.fillStyle = "rgba(28, 25, 23, 0.85)";
-ctx.fillRect(14, 12, 290, 26);
+ctx.fillRect(14, 10, 290, 24);
 ctx.fillStyle = "#fef3c7";
 ctx.font = "bold 11px monospace";
 ctx.textAlign = "left";
 ctx.fillText(
 "Joseon Fleet: " + state.joseonActive + " ships  |  Invasion Fleet: " + state.enemyActive + "/" + battle.enemyTotal,
 22,
-29
+26
 );
 // 8. Live Celestial Brush Stroke
 if (Array.isArray(userStroke) && userStroke.length >= 2) {
