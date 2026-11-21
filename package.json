@@ -1,0 +1,10 @@
+{
+  "name": "yi-sunsin-brush-and-tide-sanctuary",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Zero-dependency, neurodivergent-friendly historical art adventure chronicling Admiral Yi Sun-sin's four Imjin War naval battles through Q16.16 Hanji & sumi-e impasto art, velocity-tapered Celestial Brush gestures, and Karplus-Strong gayageum/shamisen/cello counterpoint <= 760 Hz.",
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "license": "MIT"
+}

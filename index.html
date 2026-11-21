@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admiral Yi Sun-sin — Brush & Tide of the Imjin War</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="gallery-column">
+    <header>
+      <h1>Admiral Yi Sun-sin: Brush & Tide of the Imjin War</h1>
+      <div id="hud-status">Chapter I: Battle of Okpo (May 1592) • Maneuvers: 0/6</div>
+    </header>
+    <div id="chapter-tabs" class="controls-row" role="tablist" aria-label="Select Naval Battle Chapter"></div>
+    <div class="controls-row" role="region" aria-label="Audio, Tide Motion and Scroll Controls">
+      <button id="btn-mute" type="button">Unmute Strings & Drum (M)</button>
+      <button id="btn-motion" type="button" class="active">Tide Motion: Playing (Space)</button>
+      <button id="btn-wipe" type="button">Wipe Ink Strokes</button>
+      <button id="btn-reset" type="button">Restart Battle</button>
+    </div>
+    <div class="canvas-frame">
+      <canvas id="imjin-canvas" width="320" height="240" aria-label="320 by 240 Hanji and Sumi-e Naval Scroll Canvas"></canvas>
+    </div>
+    <div id="braille-meter" class="braille-row" aria-hidden="true">⠀⠀⠀⠀⠀</div>
+    <div id="gesture-deck" class="gesture-deck" role="group" aria-label="Tactical Brush Maneuver Controls"></div>
+    <div id="narrative-voice" class="voice-box" role="status" aria-live="polite">Chapter I: Battle of Okpo (May 1592) — 1/6 Sweep an indigo wave (~) to read the coastal currents outside Okpo Harbor.</div>
+  </main>
+  <script type="module" src="src/imjin-app.js"></script>
+</body>
+</html>
