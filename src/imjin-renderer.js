@@ -1,166 +1,216 @@
 /**
-• src/imjin-renderer.js — Q16.16 Hanji Paper Grain, Origami Waves & Velocity-Tapered Sumi-e Ink
-*/
-const BAYER_4X4 = Int8Array.of(
--4, 0, -3, 1,
-2, -2, 3, -1,
--3, 1, -4, 0,
-3, -1, 2, -2
+ * src/imjin-renderer.js — Crisp Top-Down Naval Chart, Island Contours, Wind/Tide Vectors & Warships
+ */
+
+function drawTopDownWarship(ctx, x, y, angleRad, hullColor, deckColor, isTurtleShip, hasLantern) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angleRad);
+
+  // Wake ripple behind stern
+  ctx.strokeStyle = "rgba(186, 230, 253, 0.35)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(-26, -6);
+  ctx.lineTo(-14, 0);
+  ctx.lineTo(-26, 6);
+  ctx.stroke();
+
+  // Hull silhouette
+  ctx.fillStyle = hullColor;
+  ctx.beginPath();
+  ctx.moveTo(20, 0);
+  ctx.lineTo(8, -8);
+  ctx.lineTo(-16, -7);
+  ctx.lineTo(-19, 0);
+  ctx.lineTo(-16, 7);
+  ctx.lineTo(8, 8);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = "#0f172a";
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  if (isTurtleShip) {
+    // Hexagonal spiked iron roof (Geobukseon)
+    ctx.fillStyle = "#3f6212";
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 12, 5.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#bef264";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  } else {
+    // Upper fighting deck & square sail bar
+    ctx.fillStyle = deckColor;
+    ctx.fillRect(-10, -4, 18, 8);
+    ctx.fillStyle = "#f8fafc";
+    ctx.fillRect(-2, -9, 3, 18);
+  }
+
+  if (hasLantern) {
+    ctx.fillStyle = "#facc15";
+    ctx.beginPath();
+    ctx.arc(16, 0, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+
+export function renderTopDownNavalChart(ctx, w, h, state, tick, userStroke) {
+const bIdx = state.battleIndex;
+const stage = state.completedTurns;
+// 1. Deep chart sea background
+const seaPalettes = Array.of(
+["#0c2d48", "#145374"], // Okpo Harbor
+["#0b3954", "#087e8b"], // Hansando Strait
+["#0f172a", "#1e3a5f"], // Myeongnyang Storm Gorge
+["#172554", "#312e81"]  // Noryang Pre-Dawn Mist
 );
-export function packRGB555(r, g, b, x = 0, y = 0) {
-const d = BAYER_4X4[((y & 3) << 2) + (x & 3)];
-const r5 = Math.max(0, Math.min(255, r + d)) & 0xF8;
-const g5 = Math.max(0, Math.min(255, g + d)) & 0xF8;
-const b5 = Math.max(0, Math.min(255, b + d)) & 0xF8;
-return (255 << 24) | (b5 << 16) | (g5 << 8) | r5;
+const pal = seaPalettes.at(bIdx);
+const grad = ctx.createLinearGradient(0, 0, 0, h);
+grad.addColorStop(0, pal.at(0));
+grad.addColorStop(1, pal.at(1));
+ctx.fillStyle = grad;
+ctx.fillRect(0, 0, w, h);
+// 2. Nautical tactical grid & animated tidal current lines
+ctx.strokeStyle = "rgba(148, 163, 184, 0.14)";
+ctx.lineWidth = 1;
+for (let gx = 40; gx < w; gx += 40) {
+ctx.beginPath();
+ctx.moveTo(gx, 0);
+ctx.lineTo(gx, h);
+ctx.stroke();
 }
-export function createDeterministicSinLUT() {
-const lut = new Int32Array(1024);
-for (let i = 0; i <= 256; i += 1) {
-const x = BigInt(i * 9000) / 256n;
-const term = x * (18000n - x);
-const val = Number((4n * term * 65536n) / (405000000n - term)) | 0;
-lut[i] = val;
-lut[512 - i] = val;
-lut[512 + i] = -val;
-lut[(1024 - i) & 1023] = -val;
+for (let gy = 40; gy < h; gy += 40) {
+ctx.beginPath();
+ctx.moveTo(0, gy);
+ctx.lineTo(w, gy);
+ctx.stroke();
 }
-return lut;
+// Animated tidal current chevrons
+const flowOffset = (tick * 0.8) % 60;
+ctx.strokeStyle = "rgba(125, 211, 252, 0.25)";
+ctx.lineWidth = 1.5;
+for (let row = 30; row < h; row += 60) {
+for (let col = 30; col < w; col += 80) {
+const cx = col + flowOffset - 30;
+const cy = row + Math.sin((tick * 0.03) + col) * 4;
+ctx.beginPath();
+ctx.moveTo(cx - 8, cy - 4);
+ctx.lineTo(cx, cy);
+ctx.lineTo(cx - 8, cy + 4);
+ctx.stroke();
 }
-// Velocity-tapered sumi-e brush stamping with 50/50 RGB555 ink blending
-export function bakeTaperedSumiStroke(pigmentBuf, w, h, stroke, rgb) {
-if (!Array.isArray(stroke) || stroke.length < 2) return;
-const [cr, cg, cb] = rgb;
-for (let i = 1; i < stroke.length; i += 1) {
-const a = stroke.at(i - 1);
-const b = stroke.at(i);
-const dist = Math.hypot(b.x - a.x, b.y - a.y);
-// Faster pointer motion tapers into fine bristle hair; slower motion pools ink
-const radius = Math.max(1, Math.min(4, Math.round(4.5 - dist * 0.18)));
-const steps = Math.max(1, Math.ceil(dist));
-for (let s = 0; s <= steps; s += 1) {
-const px = Math.round(a.x + ((b.x - a.x) * s) / steps);
-const py = Math.round(a.y + ((b.y - a.y) * s) / steps);
-for (let oy = -radius; oy <= radius; oy += 1) {
-for (let ox = -radius; ox <= radius; ox += 1) {
-if (ox * ox + oy * oy > radius * radius) continue;
-const tx = px + ox, ty = py + oy;
-if (tx >= 0 && tx < w && ty >= 0 && ty < h) {
-const idx = ty * w + tx;
-const fresh = packRGB555(cr, cg, cb, tx, ty);
-const existing = pigmentBuf[idx];
-if (existing === 0) {
-pigmentBuf[idx] = fresh;
+}
+// 3. Top-down archipelago coastlines (unique per battle)
+ctx.fillStyle = "#1e293b";
+ctx.strokeStyle = "#eab308";
+ctx.lineWidth = 2;
+if (bIdx === 0 || bIdx === 2) {
+// Narrow strait headlands (top & bottom shores)
+ctx.beginPath();
+ctx.moveTo(0, 0);
+ctx.lineTo(w, 0);
+ctx.lineTo(w, 42);
+ctx.quadraticCurveTo(w * 0.5, 76, 0, 38);
+ctx.closePath();
+ctx.fill();
+ctx.stroke();
+ctx.beginPath();
+ctx.moveTo(0, h);
+ctx.lineTo(w, h);
+ctx.lineTo(w, h - 38);
+ctx.quadraticCurveTo(w * 0.5, h - 74, 0, h - 42);
+ctx.closePath();
+ctx.fill();
+ctx.stroke();
 } else {
-const avg = ((existing & 0x00FEFEFE) >> 1) + ((fresh & 0x00FEFEFE) >> 1);
-pigmentBuf[idx] = 0xFF000000 | avg;
+// Open strait islands (Hansando / Noryang)
+const islands = Array.of(
+{ x: 75, y: 58, rx: 46, ry: 24 },
+{ x: w - 85, y: h - 62, rx: 52, ry: 26 }
+);
+for (const isl of islands) {
+ctx.beginPath();
+ctx.ellipse(isl.x, isl.y, isl.rx, isl.ry, 0.2, 0, Math.PI * 2);
+ctx.fill();
+ctx.stroke();
 }
 }
+// 4. Enemy Atakebune Squadron (Right / Center-Right)
+const enemyCount = bIdx === 2 ? 7 : 5;
+for (let i = 0; i < enemyCount; i += 1) {
+const spread = (i - (enemyCount - 1) / 2) * 32;
+const ex = w * 0.68 + ((i % 2) * 26) - (stage >= 3 ? 14 : 0);
+const ey = h * 0.5 + spread + Math.sin(tick * 0.04 + i) * 3;
+drawTopDownWarship(ctx, ex, ey, Math.PI, "#7f1d1d", "#dc2626", false, false);
+}
+// 5. Joseon Fleet Formation (Responds dynamically to your tactical brush maneuvers!)
+const joseonShips = Array.of(
+{ offset: -2, turtle: false },
+{ offset: -1, turtle: bIdx >= 1 && stage >= 2 },
+{ offset: 0,  turtle: true }, // Admiral Yi's Flagship / Geobukseon
+{ offset: 1,  turtle: bIdx >= 1 && stage >= 2 },
+{ offset: 2,  turtle: false }
+);
+for (const ship of joseonShips) {
+let jx = w * 0.26;
+let jy = h * 0.5 + ship.offset * 34;
+let angle = 0;
+if (state.formation === "CRANE_WING" || state.formation === "VOLLEY") {
+// Hakikjin (Crane Wing) crescent encirclement!
+const wingCurve = Math.abs(ship.offset) * 34;
+jx = w * 0.36 + wingCurve;
+jy = h * 0.5 + ship.offset * 44;
+angle = -ship.offset * 0.24;
+} else if (state.formation === "TURTLE_SPEAR") {
+jx = ship.turtle ? w * 0.48 : w * 0.30;
+} else if (state.formation === "LINE_ABREAST") {
+jx = w * 0.34;
+}
+jy += Math.sin(tick * 0.05 + ship.offset) * 2.5;
+drawTopDownWarship(ctx, jx, jy, angle, "#92400e", "#d97706", ship.turtle, ship.offset === 0);
+// Cannon volley tracers on final maneuver
+if (state.formation === "VOLLEY" || state.isVictory) {
+ctx.strokeStyle = "rgba(250, 204, 21, 0.75)";
+ctx.lineWidth = 2;
+ctx.setLineDash(Array.of(6, 6));
+ctx.beginPath();
+ctx.moveTo(jx + 18, jy);
+ctx.lineTo(w * 0.66, h * 0.5 + ship.offset * 24);
+ctx.stroke();
+ctx.setLineDash(Array.of());
 }
 }
+// 6. Compass Rose HUD in top-right corner
+ctx.save();
+ctx.translate(w - 38, 38);
+ctx.strokeStyle = "rgba(250, 204, 21, 0.7)";
+ctx.lineWidth = 1.5;
+ctx.beginPath();
+ctx.arc(0, 0, 20, 0, Math.PI * 2);
+ctx.stroke();
+ctx.fillStyle = "#facc15";
+ctx.font = "bold 11px monospace";
+ctx.textAlign = "center";
+ctx.fillText("N", 0, -8);
+ctx.fillText(NAVAL_BATTLES.at(bIdx).windDir, 0, 12);
+ctx.restore();
+// 7. Live Celestial Brush tactical stroke overlay
+if (Array.isArray(userStroke) && userStroke.length >= 2) {
+ctx.strokeStyle = "#facc15";
+ctx.lineWidth = 4;
+ctx.lineCap = "round";
+ctx.lineJoin = "round";
+ctx.beginPath();
+ctx.moveTo(userStroke.at(0).x, userStroke.at(0).y);
+for (let i = 1; i < userStroke.length; i += 1) {
+ctx.lineTo(userStroke.at(i).x, userStroke.at(i).y);
+}
+ctx.stroke();
 }
 }
-}
-function drawPanokseonShip(buf32, w, h, cx, cy, scale, isTurtleShip) {
-const hw = 18 * scale;
-const hh = 6 * scale;
-for (let dy = -hh; dy <= hh; dy += 1) {
-const span = hw - Math.abs(dy);
-for (let dx = -span; dx <= span; dx += 1) {
-const px = (cx + dx) | 0;
-const py = (cy + dy) | 0;
-if (px >= 0 && px < w && py >= 0 && py < h) {
-if (isTurtleShip && dy < 0) {
-// Iron-plated hexagonal shell roof
-buf32[py * w + px] = packRGB555(54, 78, 62, px, py);
-} else {
-// Joseon pine hull
-buf32[py * w + px] = packRGB555(78, 52, 34, px, py);
-}
-}
-}
-}
-// Dragon prow lantern or command sail
-const lx = (cx + hw - 2) | 0;
-const ly = (cy - hh - 2) | 0;
-if (lx >= 0 && lx < w && ly >= 0 && ly < h) {
-buf32[ly * w + lx] = packRGB555(250, 204, 84, lx, ly);
-}
-}
-export function renderImjinFrame(buf32, w, h, state, tick, sinLUT, pigmentBuf, activeStroke, activeRgb) {
-const ch = state.chapterIndex;
-const stage = state.completedSteps;
-const horizonY = 118;
-for (let y = 0; y < h; y += 1) {
-const row = y * w;
-// H-Blank scanline wave ripple on sea surface (intensifies in Myeongnyang strait)
-const waveAmp = ch === 2 && stage >= 2 ? 4 : 2;
-const ripple = y > horizonY ? ((sinLUT[(y * 14 + tick * 3) & 1023] * waveAmp) >> 16) : 0;
-for (let x = 0; x < w; x += 1) {
-// Hanji mulberry paper grain base
-const fiber = (((x >> 3) + (y * 3)) & 7) === 0 ? -8 : 0;
-const weave = ((x ^ y) & 3) * 2;
-if (y <= horizonY) {
-// Sky palette shifts across the 4 battles (misty dawn -> twilight -> storm -> sunrise gold)
-let sr = 224 + fiber + weave;
-let sg = 214 + fiber + weave;
-let sb = 192 + fiber + weave;
-if (ch === 2 && stage >= 1 && stage < 6) {
-// Stormy Uldolmok indigo sky
-sr = 68 + weave * 3;
-sg = 84 + weave * 3;
-sb = 118 + weave * 4;
-} else if (ch === 3 && stage >= 5) {
-// Noryang sunrise gold-leaf horizon
-const glow = Math.max(0, 48 - ((horizonY - y) >> 1));
-sr = Math.min(255, sr + glow);
-sg = Math.min(255, sg + (glow >> 1));
-}
-// Distant coastal islands along horizon
-const islandH = 14 + (sinLUT[(x * 5 + ch * 180) & 1023] >> 13);
-if (y > horizonY - islandH && ((x + ch * 40) % 130) < 76) {
-sr = 58 + weave * 2;
-sg = 72 + weave * 2;
-sb = 86 + weave * 2;
-}
-buf32[row + x] = packRGB555(sr, sg, sb, x, y);
-} else {
-// Origami-folded Mode 7 style perspective sea crests
-const dist = y - horizonY;
-const crest = sinLUT[((x + ripple) * 9 + dist * 16 - tick * 2) & 1023] >> 12; // -16..+16
-const foam = crest > 11 && stage >= 1 ? 36 : 0;
-const wr = 34 + (dist >> 2) + foam + fiber;
-const wg = 76 + (dist >> 1) + crest + foam + fiber;
-const wb = 122 + (dist >> 1) + crest + foam;
-buf32[row + x] = packRGB555(wr, wg, wb, x, y);
-}
-}
-}
-// Stage 3+: Joseon Panokseon & Geobukseon (Turtle Ship) formation
-if (stage >= 3) {
-const bob = sinLUT[(tick * 6) & 1023] >> 14;
-drawPanokseonShip(buf32, w, h, 156, 166 + bob, 2, ch >= 1);
-if (stage >= 4) {
-drawPanokseonShip(buf32, w, h, 96, 148 - bob, 1, false);
-drawPanokseonShip(buf32, w, h, 218, 150 + bob, 1, false);
-}
-}
-// Stage 6: Sunrise / Lantern Cross Radiance
-if (stage >= 6) {
-const sx = 248, sy = 56;
-for (let k = -26; k <= 26; k += 1) {
-if (sx + k >= 0 && sx + k < w) buf32[sy * w + (sx + k)] = packRGB555(255, 242, 176, sx + k, sy);
-if (sy + k >= 0 && sy + k < h) buf32[(sy + k) * w + sx] = packRGB555(255, 242, 176, sx, sy + k);
-}
-}
-// Composite persistent tapered sumi-e ink strokes
-if (pigmentBuf) {
-for (let i = 0; i < buf32.length; i += 1) {
-if (pigmentBuf[i] !== 0) buf32[i] = pigmentBuf[i];
-}
-}
-// Draw active in-progress stroke
-if (Array.isArray(activeStroke) && activeStroke.length >= 2) {
-bakeTaperedSumiStroke(buf32, w, h, activeStroke, activeRgb || Array.of(36, 74, 118));
-}
-}
+import { NAVAL_BATTLES } from "./imjin-kernel.js";

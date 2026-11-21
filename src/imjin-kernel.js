@@ -1,124 +1,238 @@
 /**
- * src/imjin-kernel.js — Four Selectable Historical Naval Chapters (1592–1598)
+ * src/imjin-kernel.js — Top-Down Naval Tactics Engine (Okpo, Hansando, Myeongnyang, Noryang)
  */
 
-export const IMJIN_CHAPTERS = Array.of(
+export const NAVAL_BATTLES = Array.of(
   {
     id: "okpo-1592",
     tabLabel: "I. Okpo (1592)",
-    title: "Chapter I: Battle of Okpo (May 1592)",
-    musicLabel: "Counterpoint I: Gayageum Pyeongjo vs. Distant Taiko",
-    steps: Array.of(
-      { shape: "WAVE", key: "~", ink: Array.of(36, 74, 118), prompt: "1/6 — Sweep an indigo wave (~) to read the coastal currents outside Okpo Harbor." },
-      { shape: "SLASH", key: "/", ink: Array.of(28, 36, 48), prompt: "2/6 — Draw a decisive slash (/) to chart the approach channel into the bay." },
-      { shape: "CIRCLE", key: "O", ink: Array.of(196, 154, 76), prompt: "3/6 — Paint a circle (O) to rally the Joseon Panokseon squadron in quiet order." },
-      { shape: "SLASH", key: "/", ink: Array.of(224, 138, 54), prompt: "4/6 — Draw an upward slash (/) to break the anchored blockade line." },
-      { shape: "WAVE", key: "~", ink: Array.of(98, 128, 152), prompt: "5/6 — Sweep a soft wave (~) to clear harbor smoke across the water." },
-      { shape: "CROSS", key: "+", ink: Array.of(246, 214, 122), prompt: "6/6 — Draw a cross (+) to anchor the fleet in Admiral Yi's first naval victory." }
+    title: "Battle of Okpo (May 1592)",
+    windDir: "SE",
+    tideDir: "Northbound Flood",
+    briefing: "Japanese transports lie anchored inside Okpo Bay. Read the harbor tide (~ Wave) to align your approach.",
+    turns: Array.of(
+      {
+        orderName: "Read Harbor Current",
+        shape: "WAVE",
+        key: "~",
+        formation: "COLUMN",
+        prompt: "Maneuver 1/4: Sweep a WAVE (~) to align the Joseon vanguard with the northbound harbor tide.",
+        outcome: "The squadron rides the flood current silently into Okpo Bay."
+      },
+      {
+        orderName: "Cut Escape Channel",
+        shape: "SLASH",
+        key: "/",
+        formation: "LINE_ABREAST",
+        prompt: "Maneuver 2/4: Draw a SLASH (/) to drive your Panokseon warships across the harbor mouth.",
+        outcome: "Your broadside line blocks the seaward exit."
+      },
+      {
+        orderName: "Crescent Pinch",
+        shape: "CIRCLE",
+        key: "O",
+        formation: "CRANE_WING",
+        prompt: "Maneuver 3/4: Draw a CIRCLE (O) to curve both wings around the anchored fleet.",
+        outcome: "Enemy vessels are pinned against the rocky cove."
+      },
+      {
+        orderName: "Coordinated Cannon Volley",
+        shape: "CROSS",
+        key: "+",
+        formation: "VOLLEY",
+        prompt: "Maneuver 4/4: Draw a CROSS (+) to unleash a synchronized Cheonja-chongtong cannon volley.",
+        outcome: "Victory at Okpo! Admiral Yi secures Joseon's first naval triumph."
+      }
     )
   },
   {
     id: "hansando-1592",
     tabLabel: "II. Hansando (1592)",
-    title: "Chapter II: Battle of Hansando — Crane Wing (August 1592)",
-    musicLabel: "Counterpoint II: Shamisen vs. Gayageum Call-and-Response",
-    steps: Array.of(
-      { shape: "WAVE", key: "~", ink: Array.of(42, 92, 136), prompt: "1/6 — Sweep a wave (~) to draw the vanguard out from the narrow strait into open sea." },
-      { shape: "SLASH", key: "/", ink: Array.of(34, 42, 54), prompt: "2/6 — Draw a slash (/) to signal the decoy vessels to turn about." },
-      { shape: "CIRCLE", key: "O", ink: Array.of(214, 172, 84), prompt: "3/6 — Paint a sweeping circle (O) to curve the fleet into the Hakikjin (Crane Wing) crescent." },
-      { shape: "SLASH", key: "/", ink: Array.of(64, 96, 72), prompt: "4/6 — Draw a bold slash (/) to launch the iron-spiked Geobukseon (Turtle Ship) dragon prow." },
-      { shape: "CIRCLE", key: "O", ink: Array.of(236, 152, 62), prompt: "5/6 — Paint a tighter circle (O) to close the Crane Wing pincers across the strait." },
-      { shape: "CROSS", key: "+", ink: Array.of(252, 226, 144), prompt: "6/6 — Draw a lantern cross (+) to illuminate Hansando Strait in calm triumph." }
+    title: "Battle of Hansando — Crane Wing (Aug 1592)",
+    windDir: "NW",
+    tideDir: "Open Strait Ebb",
+    briefing: "Enemy warships hold the narrow Gyeonnaeryang channel. Feign retreat (~ Wave) to lure them into open water.",
+    turns: Array.of(
+      {
+        orderName: "Feigned Retreat",
+        shape: "WAVE",
+        key: "~",
+        formation: "DECOY_RETREAT",
+        prompt: "Maneuver 1/4: Sweep a WAVE (~) to draw the enemy vanguard out into the open sea off Hansando.",
+        outcome: "The pursuit fleet takes the bait and enters wide water."
+      },
+      {
+        orderName: "Spring Hakikjin (Crane Wing)",
+        shape: "CIRCLE",
+        key: "O",
+        formation: "CRANE_WING",
+        prompt: "Maneuver 2/4: Draw a CIRCLE (O) to snap the fleet into the legendary Crane Wing (Hakikjin) crescent.",
+        outcome: "Left and right wings wheel outward in a sweeping U-formation."
+      },
+      {
+        orderName: "Geobukseon Dragon Charge",
+        shape: "SLASH",
+        key: "/",
+        formation: "TURTLE_SPEAR",
+        prompt: "Maneuver 3/4: Draw a SLASH (/) to send iron-clad Turtle Ships (Geobukseon) straight into the center.",
+        outcome: "The dragon-prow Turtle Ships shatter the enemy flagship line."
+      },
+      {
+        orderName: "Encirclement Volley",
+        shape: "CROSS",
+        key: "+",
+        formation: "VOLLEY",
+        prompt: "Maneuver 4/4: Draw a CROSS (+) to fire converging broadsides from all angles of the Crane Wing.",
+        outcome: "Decisive victory at Hansando! Sea lanes to Jeolla Province are saved."
+      }
     )
   },
   {
     id: "myeongnyang-1597",
     tabLabel: "III. Myeongnyang (1597)",
-    title: "Chapter III: Battle of Myeongnyang — 13 Against 133 (October 1597)",
-    musicLabel: "Counterpoint III: Solo Karplus-Strong Plucked String & Buk Drum",
-    steps: Array.of(
-      { shape: "SLASH", key: "/", ink: Array.of(24, 30, 42), prompt: "1/6 — Draw a heavy slash (/) to drop iron anchors against the roaring Uldolmok Strait." },
-      { shape: "WAVE", key: "~", ink: Array.of(32, 68, 112), prompt: "2/6 — Sweep a churning wave (~) as 13 warships face 133 in the narrow gorge." },
-      { shape: "CIRCLE", key: "O", ink: Array.of(204, 156, 72), prompt: "3/6 — Paint a steady circle (O) to hold Admiral Yi's flagship unyielding at the center." },
-      { shape: "WAVE", key: "~", ink: Array.of(76, 134, 168), prompt: "4/6 — Sweep a reversing wave (~) as the Uldolmok tidal current turns against the invasion fleet." },
-      { shape: "SLASH", key: "/", ink: Array.of(232, 164, 68), prompt: "5/6 — Draw a swift slash (/) to counter-attack with the surging tide." },
-      { shape: "CROSS", key: "+", ink: Array.of(255, 238, 168), prompt: "6/6 — Draw a cross (+) to part the storm clouds over Jindo Island." }
+    title: "Battle of Myeongnyang — 13 vs 133 (Oct 1597)",
+    windDir: "NNE",
+    tideDir: "Uldolmok Reversing Torrent",
+    briefing: "Outnumbered 13 ships to 133 in the narrow Uldolmok Strait. Drop iron anchors (/ Slash) against the roaring current.",
+    turns: Array.of(
+      {
+        orderName: "Anchor Against the Gorge",
+        shape: "SLASH",
+        key: "/",
+        formation: "ANCHORED_LINE",
+        prompt: "Maneuver 1/4: Draw a SLASH (/) to drop heavy anchors in the narrowest choke point of Uldolmok.",
+        outcome: "Admiral Yi's flagship holds firm while the narrow strait bottlenecks the enemy."
+      },
+      {
+        orderName: "Ride the Turning Tide",
+        shape: "WAVE",
+        key: "~",
+        formation: "TIDE_SHIFT",
+        prompt: "Maneuver 2/4: Sweep a WAVE (~) as the violent Uldolmok current reverses direction.",
+        outcome: "Enemy ships collide helplessly as the roaring tide turns southward."
+      },
+      {
+        orderName: "Rally the 12 Warships",
+        shape: "CIRCLE",
+        key: "O",
+        formation: "CRANE_WING",
+        prompt: "Maneuver 3/4: Draw a CIRCLE (O) to rally all 12 remaining Panokseon vessels beside the flagship.",
+        outcome: "Inspired by the flagship's stand, the entire squadron closes ranks."
+      },
+      {
+        orderName: "Down-Current Counter-Strike",
+        shape: "CROSS",
+        key: "+",
+        formation: "VOLLEY",
+        prompt: "Maneuver 4/4: Draw a CROSS (+) to ride the surging current down on the tangled fleet.",
+        outcome: "Miracle at Myeongnyang! 13 ships defeat 133 without losing a single vessel."
+      }
     )
   },
   {
     id: "noryang-1598",
     tabLabel: "IV. Noryang (1598)",
-    title: "Chapter IV: Battle of Noryang — Dawn Drumbeat (December 1598)",
-    musicLabel: "Counterpoint IV: Full Korean-Japanese Chamber Dawn Resolution",
-    steps: Array.of(
-      { shape: "CIRCLE", key: "O", ink: Array.of(48, 66, 98), prompt: "1/6 — Paint a midnight circle (O) to form the pre-dawn blockade in Noryang Strait." },
-      { shape: "WAVE", key: "~", ink: Array.of(84, 108, 138), prompt: "2/6 — Sweep a quiet wave (~) as allied vessels glide through sea mist." },
-      { shape: "SLASH", key: "/", ink: Array.of(212, 136, 62), prompt: "3/6 — Draw a slash (/) to intercept the retreating fleet before daybreak." },
-      { shape: "CIRCLE", key: "O", ink: Array.of(238, 182, 82), prompt: "4/6 — Paint a resonant circle (O) to sustain Admiral Yi's steady war-drum cadence." },
-      { shape: "WAVE", key: "~", ink: Array.of(244, 212, 138), prompt: "5/6 — Sweep a dawn wave (~) as golden morning mist lifts across the waves." },
-      { shape: "CROSS", key: "+", ink: Array.of(255, 246, 196), prompt: "6/6 — Draw a sunrise cross (+) to honor peace returning to the southern sea." }
+    title: "Battle of Noryang — Dawn Blockade (Dec 1598)",
+    windDir: "E",
+    tideDir: "Pre-Dawn Slack Water",
+    briefing: "Pre-dawn mist blankets Noryang Strait. Form a silent night blockade (O Circle) before daybreak.",
+    turns: Array.of(
+      {
+        orderName: "Pre-Dawn Blockade",
+        shape: "CIRCLE",
+        key: "O",
+        formation: "CRANE_WING",
+        prompt: "Maneuver 1/4: Draw a CIRCLE (O) to seal the western exit of Noryang Strait under cover of darkness.",
+        outcome: "Allied ships hold silent stations in the midnight mist."
+      },
+      {
+        orderName: "Mist Ambush",
+        shape: "WAVE",
+        key: "~",
+        formation: "LINE_ABREAST",
+        prompt: "Maneuver 2/4: Sweep a WAVE (~) to glide forward on the pre-dawn swell.",
+        outcome: "Warships emerge from the fog at point-blank range."
+      },
+      {
+        orderName: "Turtle Ship Breakthrough",
+        shape: "SLASH",
+        key: "/",
+        formation: "TURTLE_SPEAR",
+        prompt: "Maneuver 3/4: Draw a SLASH (/) to cleave the retreating column in two.",
+        outcome: "The vanguard is cut off from the main fleet."
+      },
+      {
+        orderName: "Sunrise Drum & Final Volley",
+        shape: "CROSS",
+        key: "+",
+        formation: "VOLLEY",
+        prompt: "Maneuver 4/4: Draw a CROSS (+) to beat the war drum at sunrise and complete the campaign.",
+        outcome: "Dawn breaks over Noryang Strait; the seven-year war ends in peace."
+      }
     )
   }
 );
 
-export function createImjinState(chapterIndex = 0) {
-  const idx = Math.max(0, Math.min(IMJIN_CHAPTERS.length - 1, chapterIndex | 0));
-  const ch = IMJIN_CHAPTERS.at(idx);
+export function createTacticalState(battleIndex = 0) {
+  const idx = Math.max(0, Math.min(NAVAL_BATTLES.length - 1, battleIndex | 0));
+  const b = NAVAL_BATTLES.at(idx);
   return {
-    chapterIndex: idx,
-    stepIndex: 0,
-    completedSteps: 0,
-    isComplete: false,
-    narration: ch.title + " — " + ch.steps.at(0).prompt
+    battleIndex: idx,
+    turnIndex: 0,
+    completedTurns: 0,
+    formation: "COLUMN",
+    isVictory: false,
+    narration: b.title + " — " + b.briefing + " " + b.turns.at(0).prompt
   };
 }
 
-export function applyImjinGesture(state, detectedShape) {
-  const ch = IMJIN_CHAPTERS.at(state.chapterIndex);
-  if (state.isComplete) {
+export function applyTacticalGesture(state, detectedShape) {
+  const b = NAVAL_BATTLES.at(state.battleIndex);
+  if (state.isVictory) {
     return {
       ...state,
-      narration: ch.title + " is complete (6/6). Continue painting sumi-e strokes on Hanji paper or select another battle."
+      narration: b.title + " won! Select another historical battle above or replay this engagement."
     };
   }
 
-  const step = ch.steps.at(state.stepIndex);
+  const turn = b.turns.at(state.turnIndex);
   if (!detectedShape || detectedShape === "NONE") {
     return {
       ...state,
-      narration: "Ink brush touches the Hanji scroll gently. " + step.prompt
+      narration: "Stand by on the command deck. " + turn.prompt
     };
   }
 
-  if (detectedShape !== step.shape) {
+  if (detectedShape !== turn.shape) {
     return {
       ...state,
-      narration: "You brushed a " + detectedShape + " stroke. Next maneuver: " + step.prompt
+      narration: "Issued " + detectedShape + ", but Admiral Yi signals " + turn.orderName + ". " + turn.prompt
     };
   }
 
-  const nextDone = state.completedSteps + 1;
-  if (state.stepIndex < ch.steps.length - 1) {
-    const nextStep = ch.steps.at(state.stepIndex + 1);
+  const nextCompleted = state.completedTurns + 1;
+  if (state.turnIndex < b.turns.length - 1) {
+    const nextTurn = b.turns.at(state.turnIndex + 1);
     return {
       ...state,
-      stepIndex: state.stepIndex + 1,
-      completedSteps: nextDone,
-      narration: "Maneuver " + nextDone + "/6 complete. " + nextStep.prompt
+      turnIndex: state.turnIndex + 1,
+      completedTurns: nextCompleted,
+      formation: turn.formation,
+      narration: turn.outcome + " Next: " + nextTurn.prompt
     };
   }
 
   return {
     ...state,
-    completedSteps: 6,
-    isComplete: true,
-    narration: ch.title + " complete (6/6). Rest in the full chamber counterpoint or explore another battle."
+    completedTurns: 4,
+    formation: "VOLLEY",
+    isVictory: true,
+    narration: turn.outcome + " (" + b.title + " Complete — 4/4 Maneuvers)."
   };
 }
 
-export function imjinProgressBraille(state) {
-  const levels = Array.of(0x2800, 0x2840, 0x2846, 0x28c7, 0x28e7, 0x28f7, 0x28ff);
-  const idx = Math.max(0, Math.min(6, state.completedSteps));
-
-return String.fromCodePoint(levels.at(idx)).repeat(5);
+export function tacticalProgressBraille(state) {
+  const levels = Array.of(0x2800, 0x2846, 0x28c7, 0x28f7, 0x28ff);
+  const idx = Math.max(0, Math.min(4, state.completedTurns));
+  return String.fromCodePoint(levels.at(idx)).repeat(5);
 }
