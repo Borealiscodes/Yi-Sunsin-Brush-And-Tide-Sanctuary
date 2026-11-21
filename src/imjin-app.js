@@ -51,7 +51,7 @@ const buttons = Array.of(
 { shape: "WAVE", label: "Wave (~) Current/Tide" },
 { shape: "CIRCLE", label: "Circle (O) Crane Wing" },
 { shape: "SLASH", label: "Slash (/) Ship Charge" },
-{ shape: "CROSS", label: "Cross (+) Cannon Volley" }
+{ shape: "CROSS", label: "Cross (+) Decisive Strike" }
 );
 for (const btnSpec of buttons) {
 const btn = document.createElement("button");
