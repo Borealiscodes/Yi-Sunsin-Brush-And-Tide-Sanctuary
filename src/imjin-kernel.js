@@ -1,173 +1,217 @@
 /**
- * src/imjin-kernel.js — Top-Down Naval Tactics Engine (Okpo, Hansando, Myeongnyang, Noryang)
+ * src/imjin-kernel.js — Historically Accurate Fleet Counts & Tactical Formations (1592–1598)
  */
 
 export const NAVAL_BATTLES = Array.of(
   {
     id: "okpo-1592",
-    tabLabel: "I. Okpo (1592)",
+    tabLabel: "I. Okpo (24 vs 50)",
     title: "Battle of Okpo (May 1592)",
+    joseonTotal: 24,
+    enemyTotal: 50,
+    turtleCount: 0,
     windDir: "SE",
     tideDir: "Northbound Flood",
-    briefing: "Japanese transports lie anchored inside Okpo Bay. Read the harbor tide (~ Wave) to align your approach.",
+    briefing: "24 Joseon Panokseon approach 50 anchored transports in Okpo Bay (Grid E2–G5). Read the harbor current (~ Wave).",
     turns: Array.of(
       {
         orderName: "Read Harbor Current",
         shape: "WAVE",
         key: "~",
         formation: "COLUMN",
-        prompt: "Maneuver 1/4: Sweep a WAVE (~) to align the Joseon vanguard with the northbound harbor tide.",
-        outcome: "The squadron rides the flood current silently into Okpo Bay."
+        joseonSunk: 0,
+        enemySunk: 0,
+        prompt: "1/4: Sweep a WAVE (~) to ride the northbound flood current into sectors B2–B5.",
+        outcome: "All 24 Panokseon glide silently into Okpo Bay along the flood tide."
       },
       {
-        orderName: "Cut Escape Channel",
+        orderName: "Block Seaward Exit",
         shape: "SLASH",
         key: "/",
         formation: "LINE_ABREAST",
-        prompt: "Maneuver 2/4: Draw a SLASH (/) to drive your Panokseon warships across the harbor mouth.",
-        outcome: "Your broadside line blocks the seaward exit."
+        joseonSunk: 0,
+        enemySunk: 8,
+        prompt: "2/4: Draw a SLASH (/) to form a broadside line across sectors D1–D6, sealing the bay.",
+        outcome: "The 24-ship line cuts off the harbor mouth; 8 vanguard transports burn."
       },
       {
-        orderName: "Crescent Pinch",
+        orderName: "Harbor Crescent Pinch",
         shape: "CIRCLE",
         key: "O",
         formation: "CRANE_WING",
-        prompt: "Maneuver 3/4: Draw a CIRCLE (O) to curve both wings around the anchored fleet.",
-        outcome: "Enemy vessels are pinned against the rocky cove."
+        joseonSunk: 0,
+        enemySunk: 18,
+        prompt: "3/4: Draw a CIRCLE (O) to curve both wings into sectors E1–E6 around the anchorage.",
+        outcome: "Both Joseon flanks close around the cove; 18 enemy ships are disabled."
       },
       {
-        orderName: "Coordinated Cannon Volley",
+        orderName: "Cheonja Cannon Volley",
         shape: "CROSS",
         key: "+",
         formation: "VOLLEY",
-        prompt: "Maneuver 4/4: Draw a CROSS (+) to unleash a synchronized Cheonja-chongtong cannon volley.",
-        outcome: "Victory at Okpo! Admiral Yi secures Joseon's first naval triumph."
+        joseonSunk: 0,
+        enemySunk: 26,
+        prompt: "4/4: Draw a CROSS (+) to fire a coordinated heavy cannon volley into Grid F2–G5.",
+        outcome: "Victory at Okpo! 26 enemy vessels destroyed with zero Joseon ships lost."
       }
     )
   },
   {
     id: "hansando-1592",
-    tabLabel: "II. Hansando (1592)",
+    tabLabel: "II. Hansando (56 vs 73)",
     title: "Battle of Hansando — Crane Wing (Aug 1592)",
+    joseonTotal: 56,
+    enemyTotal: 73,
+    turtleCount: 3,
     windDir: "NW",
     tideDir: "Open Strait Ebb",
-    briefing: "Enemy warships hold the narrow Gyeonnaeryang channel. Feign retreat (~ Wave) to lure them into open water.",
+    briefing: "56 Joseon warships (3 Geobukseon) face 73 enemy warships emerging from Gyeonnaeryang Channel.",
     turns: Array.of(
       {
-        orderName: "Feigned Retreat",
+        orderName: "Feigned Retreat (Decoy)",
         shape: "WAVE",
         key: "~",
         formation: "DECOY_RETREAT",
-        prompt: "Maneuver 1/4: Sweep a WAVE (~) to draw the enemy vanguard out into the open sea off Hansando.",
-        outcome: "The pursuit fleet takes the bait and enters wide water."
+        joseonSunk: 0,
+        enemySunk: 0,
+        prompt: "1/4: Sweep a WAVE (~) to draw the 73-ship vanguard westward into open water (Grid C2–E5).",
+        outcome: "The enemy fleet pursues the decoy squadron out of the narrow channel."
       },
       {
         orderName: "Spring Hakikjin (Crane Wing)",
         shape: "CIRCLE",
         key: "O",
         formation: "CRANE_WING",
-        prompt: "Maneuver 2/4: Draw a CIRCLE (O) to snap the fleet into the legendary Crane Wing (Hakikjin) crescent.",
-        outcome: "Left and right wings wheel outward in a sweeping U-formation."
+        joseonSunk: 0,
+        enemySunk: 14,
+        prompt: "2/4: Draw a CIRCLE (O) to snap all 56 ships into the Crane Wing (Hakikjin) U-crescent.",
+        outcome: "Left and right wings wheel outward around Grid D1–F6, trapping the pursuit fleet."
       },
       {
         orderName: "Geobukseon Dragon Charge",
         shape: "SLASH",
         key: "/",
         formation: "TURTLE_SPEAR",
-        prompt: "Maneuver 3/4: Draw a SLASH (/) to send iron-clad Turtle Ships (Geobukseon) straight into the center.",
-        outcome: "The dragon-prow Turtle Ships shatter the enemy flagship line."
+        joseonSunk: 0,
+        enemySunk: 35,
+        prompt: "3/4: Draw a SLASH (/) to drive the 3 iron-clad Turtle Ships straight into the center command.",
+        outcome: "Turtle Ships smash the enemy center; 35 vessels are sunk or captured."
       },
       {
-        orderName: "Encirclement Volley",
+        orderName: "Converging Broadside Volley",
         shape: "CROSS",
         key: "+",
         formation: "VOLLEY",
-        prompt: "Maneuver 4/4: Draw a CROSS (+) to fire converging broadsides from all angles of the Crane Wing.",
-        outcome: "Decisive victory at Hansando! Sea lanes to Jeolla Province are saved."
+        joseonSunk: 0,
+        enemySunk: 47,
+        prompt: "4/4: Draw a CROSS (+) to fire converging cannon fire from every point of the Crane Wing.",
+        outcome: "Decisive victory at Hansando! 47 of 73 enemy ships destroyed; zero Joseon ships lost."
       }
     )
   },
   {
     id: "myeongnyang-1597",
-    tabLabel: "III. Myeongnyang (1597)",
+    tabLabel: "III. Myeongnyang (13 vs 133)",
     title: "Battle of Myeongnyang — 13 vs 133 (Oct 1597)",
+    joseonTotal: 13,
+    enemyTotal: 133,
+    turtleCount: 0,
     windDir: "NNE",
     tideDir: "Uldolmok Reversing Torrent",
-    briefing: "Outnumbered 13 ships to 133 in the narrow Uldolmok Strait. Drop iron anchors (/ Slash) against the roaring current.",
+    briefing: "13 Joseon Panokseon face 133 warships in the narrow Uldolmok Gorge (Grid C3–C4). Drop anchors (/ Slash).",
     turns: Array.of(
       {
-        orderName: "Anchor Against the Gorge",
+        orderName: "Anchor at the Choke Point",
         shape: "SLASH",
         key: "/",
         formation: "ANCHORED_LINE",
-        prompt: "Maneuver 1/4: Draw a SLASH (/) to drop heavy anchors in the narrowest choke point of Uldolmok.",
-        outcome: "Admiral Yi's flagship holds firm while the narrow strait bottlenecks the enemy."
+        joseonSunk: 0,
+        enemySunk: 5,
+        prompt: "1/4: Draw a SLASH (/) to anchor all 13 ships across the narrow gorge at Column C.",
+        outcome: "Admiral Yi's flagship holds the choke point alone while 133 ships bottleneck in Column E–H."
       },
       {
-        orderName: "Ride the Turning Tide",
+        orderName: "Endure & Turn the Tide",
         shape: "WAVE",
         key: "~",
         formation: "TIDE_SHIFT",
-        prompt: "Maneuver 2/4: Sweep a WAVE (~) as the violent Uldolmok current reverses direction.",
-        outcome: "Enemy ships collide helplessly as the roaring tide turns southward."
+        joseonSunk: 0,
+        enemySunk: 14,
+        prompt: "2/4: Sweep a WAVE (~) as the violent Uldolmok current reverses southward against the enemy.",
+        outcome: "The roaring current reverses! Crowded enemy ships collide in sectors D2–F5."
       },
       {
-        orderName: "Rally the 12 Warships",
+        orderName: "Close Ranks Across Strait",
         shape: "CIRCLE",
         key: "O",
         formation: "CRANE_WING",
-        prompt: "Maneuver 3/4: Draw a CIRCLE (O) to rally all 12 remaining Panokseon vessels beside the flagship.",
-        outcome: "Inspired by the flagship's stand, the entire squadron closes ranks."
+        joseonSunk: 0,
+        enemySunk: 22,
+        prompt: "3/4: Draw a CIRCLE (O) to unite all 13 warships in a tight offensive arc.",
+        outcome: "All 13 Joseon ships advance together into the tangled vanguard."
       },
       {
-        orderName: "Down-Current Counter-Strike",
+        orderName: "Down-Current Counter-Volley",
         shape: "CROSS",
         key: "+",
         formation: "VOLLEY",
-        prompt: "Maneuver 4/4: Draw a CROSS (+) to ride the surging current down on the tangled fleet.",
-        outcome: "Miracle at Myeongnyang! 13 ships defeat 133 without losing a single vessel."
+        joseonSunk: 0,
+        enemySunk: 31,
+        prompt: "4/4: Draw a CROSS (+) to fire heavy broadsides down the reversing torrent.",
+        outcome: "Miracle at Myeongnyang! 31 enemy warships sunk; all 13 Joseon ships survive."
       }
     )
   },
   {
     id: "noryang-1598",
-    tabLabel: "IV. Noryang (1598)",
+    tabLabel: "IV. Noryang (63 vs 500)",
     title: "Battle of Noryang — Dawn Blockade (Dec 1598)",
+    joseonTotal: 63,
+    enemyTotal: 500,
+    turtleCount: 4,
     windDir: "E",
     tideDir: "Pre-Dawn Slack Water",
-    briefing: "Pre-dawn mist blankets Noryang Strait. Form a silent night blockade (O Circle) before daybreak.",
+    briefing: "63 Joseon warships seal Noryang Strait at midnight against 500 retreating vessels.",
     turns: Array.of(
       {
-        orderName: "Pre-Dawn Blockade",
+        orderName: "Midnight Strait Blockade",
         shape: "CIRCLE",
         key: "O",
         formation: "CRANE_WING",
-        prompt: "Maneuver 1/4: Draw a CIRCLE (O) to seal the western exit of Noryang Strait under cover of darkness.",
-        outcome: "Allied ships hold silent stations in the midnight mist."
+        joseonSunk: 0,
+        enemySunk: 40,
+        prompt: "1/4: Draw a CIRCLE (O) to form a pre-dawn blockade arc across sectors C1–D6.",
+        outcome: "63 Joseon ships seal the strait under cover of midnight mist."
       },
       {
-        orderName: "Mist Ambush",
+        orderName: "Pre-Dawn Tide Advance",
         shape: "WAVE",
         key: "~",
         formation: "LINE_ABREAST",
-        prompt: "Maneuver 2/4: Sweep a WAVE (~) to glide forward on the pre-dawn swell.",
-        outcome: "Warships emerge from the fog at point-blank range."
+        joseonSunk: 0,
+        enemySunk: 95,
+        prompt: "2/4: Sweep a WAVE (~) to glide silently into point-blank broadside range.",
+        outcome: "Surprise broadsides erupt across the foggy strait."
       },
       {
-        orderName: "Turtle Ship Breakthrough",
+        orderName: "Turtle Ship Spearhead",
         shape: "SLASH",
         key: "/",
         formation: "TURTLE_SPEAR",
-        prompt: "Maneuver 3/4: Draw a SLASH (/) to cleave the retreating column in two.",
-        outcome: "The vanguard is cut off from the main fleet."
+        joseonSunk: 0,
+        enemySunk: 150,
+        prompt: "3/4: Draw a SLASH (/) to drive the 4 Turtle Ships through the enemy column.",
+        outcome: "The retreating formation is split in two across sectors E2–G5."
       },
       {
-        orderName: "Sunrise Drum & Final Volley",
+        orderName: "Sunrise War-Drum Volley",
         shape: "CROSS",
         key: "+",
         formation: "VOLLEY",
-        prompt: "Maneuver 4/4: Draw a CROSS (+) to beat the war drum at sunrise and complete the campaign.",
-        outcome: "Dawn breaks over Noryang Strait; the seven-year war ends in peace."
+        joseonSunk: 0,
+        enemySunk: 200,
+        prompt: "4/4: Draw a CROSS (+) to beat the war drum at sunrise and complete the Imjin campaign.",
+        outcome: "Dawn breaks over Noryang Strait; over 200 enemy vessels destroyed and peace is won."
       }
     )
   }
@@ -181,6 +225,8 @@ export function createTacticalState(battleIndex = 0) {
     turnIndex: 0,
     completedTurns: 0,
     formation: "COLUMN",
+    joseonActive: b.joseonTotal,
+    enemyActive: b.enemyTotal,
     isVictory: false,
     narration: b.title + " — " + b.briefing + " " + b.turns.at(0).prompt
   };
@@ -199,18 +245,20 @@ export function applyTacticalGesture(state, detectedShape) {
   if (!detectedShape || detectedShape === "NONE") {
     return {
       ...state,
-      narration: "Stand by on the command deck. " + turn.prompt
+      narration: "Command deck ready. " + turn.prompt
     };
   }
 
   if (detectedShape !== turn.shape) {
     return {
       ...state,
-      narration: "Issued " + detectedShape + ", but Admiral Yi signals " + turn.orderName + ". " + turn.prompt
+      narration: "Brushed " + detectedShape + ", but Admiral Yi signals " + turn.orderName + ". " + turn.prompt
     };
   }
 
   const nextCompleted = state.completedTurns + 1;
+  const remainingEnemy = Math.max(0, b.enemyTotal - turn.enemySunk);
+
   if (state.turnIndex < b.turns.length - 1) {
     const nextTurn = b.turns.at(state.turnIndex + 1);
     return {
@@ -218,6 +266,7 @@ export function applyTacticalGesture(state, detectedShape) {
       turnIndex: state.turnIndex + 1,
       completedTurns: nextCompleted,
       formation: turn.formation,
+      enemyActive: remainingEnemy,
       narration: turn.outcome + " Next: " + nextTurn.prompt
     };
   }
@@ -226,6 +275,7 @@ export function applyTacticalGesture(state, detectedShape) {
     ...state,
     completedTurns: 4,
     formation: "VOLLEY",
+    enemyActive: remainingEnemy,
     isVictory: true,
     narration: turn.outcome + " (" + b.title + " Complete — 4/4 Maneuvers)."
   };
