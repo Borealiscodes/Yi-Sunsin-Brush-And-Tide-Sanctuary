@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """
 scripts/render_imjin_cues.py — Pre-renders 1:1 FNV-1a content-hashed VITS narration WAVs
-for Admiral Yi Sun-sin: Brush & Tide of the Imjin War using en_GB-alan-medium (1.28x cadence).
+for Admiral Yi Sun-sin: Brush & Tide of the Imjin War using en_GB-alan-medium (calm storyteller cadence).
 """
 import json
-import os
 import re
 import shutil
 import subprocess
@@ -44,7 +43,6 @@ def extract_cues_from_kernel() -> list[str]:
         if base + 3 < len(outcomes):
             cues.append(f"{outcomes[base + 3]} ({title} Complete — 4/4 Maneuvers).")
 
-    # Deduplicate while preserving order
     seen: set[str] = set()
     unique: list[str] = []
     for c in cues:
@@ -64,7 +62,7 @@ def find_voice_model() -> Path | None:
         if p.exists():
             return p
     found = list(Path.home().rglob("en_GB-alan-medium.onnx"))
-    return found[0] if found else None
+    return found if found else None
 
 
 def main() -> None:
@@ -75,7 +73,7 @@ def main() -> None:
 
     print(f"Discovered {len(cues)} unique historical narration cues.")
     if not piper_bin or not model_path:
-        print("Piper binary or en_GB-alan-medium.onnx not found locally; writing FNV-1a manifest for Web Speech fallback.")
+        print("Piper binary or en_GB-alan-medium.onnx not found locally; writing FNV-1a manifest.")
         for text in cues:
             digest = fnv1a_hex(text)
             manifest[digest] = {"file": f"cue_{digest}.wav", "text": text, "rendered": False}
@@ -86,7 +84,7 @@ def main() -> None:
         digest = fnv1a_hex(text)
         wav_path = OUT_DIR / f"cue_{digest}.wav"
         manifest[digest] = {"file": wav_path.name, "text": text, "rendered": True}
-                cmd = [
+        cmd = [
             piper_bin,
             "--model", str(model_path),
             "--length-scale", "0.96",
