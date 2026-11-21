@@ -1,0 +1,46 @@
+name: Render Imjin VITS Narration Cues
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "src/imjin-kernel.js"
+      - "scripts/render_imjin_cues.py"
+
+permissions:
+  contents: write
+
+jobs:
+  render-vits:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install piper-tts & download en_GB-alan-medium
+        run: |
+          pip install --no-cache-dir piper-tts
+          mkdir -p ~/.local/share/piper
+          curl -L -s -o ~/.local/share/piper/en_GB-alan-medium.onnx \
+            https://huggingface.co
+          curl -L -s -o ~/.local/share/piper/en_GB-alan-medium.onnx.json \
+            https://huggingface.co.json
+
+      - name: Render 20 FNV-1a hashed WAV cues (1.28x cadence)
+        run: |
+          python3 scripts/render_imjin_cues.py
+
+      - name: Commit pre-rendered VITS WAVs & manifest
+        run: |
+          git config user.name "Borealis Serenity Hedling"
+          git config user.email "chguard-sentinel@vaked.dev"
+          git add audio/cues/
+          if ! git diff --cached --quiet; then
+            git commit -s -m "ci: pre-render 20 FNV-1a en_GB-alan-medium VITS narration cues"
+            git push
+          fi
