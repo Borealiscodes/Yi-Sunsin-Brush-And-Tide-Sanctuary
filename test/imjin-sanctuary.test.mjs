@@ -26,3 +26,11 @@ assert.equal(st.isVictory, true);
 assert.equal(tacticalProgressBraille(st).length, 5);
 }
 });
+
+import { fnv1aHex, cueUrlForText } from "../src/fnv1a-hash.js";
+
+test("3. FNV-1a transcript digest produces deterministic 1:1 cue filenames", () => {
+  const sample = "Battle of Okpo (May 1592)";
+  assert.equal(fnv1aHex(sample).length, 8);
+  assert.equal(cueUrlForText(sample), "audio/cues/cue_" + fnv1aHex(sample) + ".wav");
+});
