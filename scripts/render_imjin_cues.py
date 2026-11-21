@@ -86,12 +86,11 @@ def main() -> None:
         digest = fnv1a_hex(text)
         wav_path = OUT_DIR / f"cue_{digest}.wav"
         manifest[digest] = {"file": wav_path.name, "text": text, "rendered": True}
-        if wav_path.exists():
-            continue
-        cmd = [
+                cmd = [
             piper_bin,
             "--model", str(model_path),
-            "--length-scale", "0.78",
+            "--length-scale", "0.96",
+            "--sentence-silence", "0.42",
             "--output_file", str(wav_path),
         ]
         subprocess.run(cmd, input=text.encode("utf-8"), check=True)
